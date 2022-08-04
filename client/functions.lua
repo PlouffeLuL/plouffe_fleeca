@@ -1,5 +1,7 @@
 local Utils = exports.plouffe_lib:Get("Utils")
 local Callback = exports.plouffe_lib:Get("Callback")
+local Interface = exports.plouffe_lib:Get("Interface")
+local Lang = exports.plouffe_lib:Get("Lang")
 
 local Wait = Wait
 local GetEntityCoords = GetEntityCoords
@@ -19,7 +21,6 @@ local FreezeEntityPosition = FreezeEntityPosition
 local SetEntityNoCollisionEntity = SetEntityNoCollisionEntity
 local SetEntityVisible = SetEntityVisible
 local SetEntityRotation = SetEntityRotation
-local SetEntityCollision = SetEntityCollision
 local PlaceObjectOnGroundProperly = PlaceObjectOnGroundProperly
 local SetModelAsNoLongerNeeded = SetModelAsNoLongerNeeded
 local SetEntityAsNoLongerNeeded = SetEntityAsNoLongerNeeded
@@ -48,6 +49,39 @@ local NetworkGetNetworkIdFromEntity = NetworkGetNetworkIdFromEntity
 function Fle:Start()
     self:ExportAllZones()
     self:RegisterEvents()
+
+    local data = {}
+    for k,v in pairs(self.Trolley) do
+        table.insert(data, joaat(v.trolley))
+    end
+
+    if GetResourceState("qtarget") ~= "missing" then
+        local breakCount = 0
+        while GetResourceState("qtarget") ~= "started" and breakCount < 30 do
+            breakCount += 1
+            Wait(1000)
+        end
+
+        if GetResourceState("qtarget") ~= "started" then
+            return
+        end
+
+        exports.qtarget:AddTargetModel(data,{
+            distance = 1.5,
+            options = {
+                {
+                    icon = 'fas fa-info',
+                    label = Lang.bank_tryLoot,
+                    action = Fle.TryLoot
+                },
+                {
+                    icon = 'fas fa-viruses',
+                    label = Lang.bank_tryDestroy,
+                    action = Fle.DestroyLoot
+                }
+            }
+        })
+    end
 end
 
 function Fle:ExportAllZones()
@@ -75,12 +109,6 @@ function Fle:RegisterEvents()
 
     AddEventHandler("trolley:TryLoot", Fle.TryLoot)
     AddEventHandler("trolley:destroy", Fle.DestroyLoot)
-end
-
-function Fle:GetItemCount(item)
-    local count = exports.ox_inventory:Search(2, item)
-    count = count and count or 0
-    return count, item
 end
 
 function Fle:HackAnimation()
@@ -145,7 +173,6 @@ function Fle:ThermalAnimation()
     local ped = PlayerPedId()
     local pedRotation = GetEntityRotation(ped)
     local offset = GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.4, 0.1)
-    local pedCoords = GetEntityCoords(ped)
     local boneIndex = GetPedBoneIndex(ped, 28422)
     local dict = "anim@heists@ornate_bank@thermal_charge"
 
@@ -196,19 +223,6 @@ function Fle:ThermalAnimation()
     end
 end
 
-function Fle:SpawnTrolley()
-    local ped = PlayerPedId()
-
-    local offset = GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.0, 0.0)
-    local cashTrolley = Utils:CreateProp("hei_prop_hei_cash_trolly_01",{x = offset.x, y = offset.y, z = offset.z - 1.0}, nil, true, true)
-
-    local offset = GetOffsetFromEntityInWorldCoords(ped, 0.0, 3.0, 0.0)
-    local goldTrolley = Utils:CreateProp("ch_prop_gold_trolly_01a",{x = offset.x, y = offset.y, z = offset.z - 1.0}, nil, true, true)
-
-    local offset = GetOffsetFromEntityInWorldCoords(ped, 0.0, 6.0, 0.0)
-    local goldTrolley = Utils:CreateProp("ch_prop_diamond_trolly_01a",{x = offset.x, y = offset.y, z = offset.z - 1.0}, nil, true, true)
-end
-
 function Fle:GetTrolley(coords)
     local entity = nil
 
@@ -232,7 +246,15 @@ function Fle.TryThermal()
     end
 
     local finished = Fle:ThermalAnimation()
-    local succes = exports.memorygame:start(10, 3, 3, 20)
+
+    local succes = Interface.MemorySquares.New({
+        time = 10,
+        amount = 4,
+        solutionAmount = 5,
+        errors = 0,
+        delay = 2
+    })
+
     finished(succes)
     TriggerServerEvent("plouffe_fleeca:finished_thermal", zone, succes, Fle.Utils.MyAuthKey)
 end
@@ -243,7 +265,7 @@ function Fle.TryHack()
         return
     end
 
-    if Fle:GetItemCount("card_fleeca") < 1 then
+    if Utils:GetItemCount("card_fleeca") < 1 then
         return
     end
 
@@ -259,15 +281,22 @@ function Fle.TryHack()
         return
     end
 
-    exports.plouffe_dispatch:SendAlert("10-90 C")
+    if GetResourceState("plouffe_dispatch") == "started" then
+        exports.plouffe_dispatch:SendAlert("10-90 C")
+    end
 
     local finish = Fle:HackAnimation()
-    local succes = exports.hacking:start(10, 3)
+    local succes = Interface.MovingSquare.New({
+        time = 20,
+        amount = 6,
+        errors = 0,
+        delay = 6
+    })
 
     finish()
 
     if not succes then
-        return  TriggerServerEvent("plouffe_fleeca:hacking_failed", Fle.Utils.MyAuthKey)
+        return TriggerServerEvent("plouffe_fleeca:hacking_failed", Fle.Utils.MyAuthKey)
     end
 
     local waitTimer = math.random(1000 * 60 * 6, 1000 * 60 * 10)
@@ -278,7 +307,9 @@ function Fle.TryHack()
         local timeout = 1000
         local times = 0
 
-        Utils:Notify(("Il vous reste %s minutes avant que la porte ouvre"):format(math.ceil(waitTimer / 1000 / 60)))
+        Interface.Notifications.Show({
+            message = Lang.bank_timeUntilDoorOpens:format(math.ceil(waitTimer / 1000 / 60))
+        })
 
         while Fle.Utils.currentFleeca and waitTimer > 0 do
             waitTimer = waitTimer - timeout
@@ -286,7 +317,9 @@ function Fle.TryHack()
 
             if times == 60 then
                 times = 0
-                Utils:Notify(("Il vous reste %s minutes avant que la porte ouvre"):format(math.ceil(waitTimer / 1000 / 60)))
+                Interface.Notifications.Show({
+                    message = Lang.bank_timeUntilDoorOpens:format(math.ceil(waitTimer / 1000 / 60))
+                })
             end
 
             Wait(timeout)
@@ -302,7 +335,15 @@ end
 exports("TryHack",Fle.TryHack)
 
 function Fle.DestroyLoot()
-    print ("Wtf man")
+    local ped = PlayerPedId()
+    local pedCoords = GetEntityCoords(ped)
+    local trolleyEntity, data, key = Fle:GetTrolley(pedCoords)
+
+    if not trolleyEntity then
+        return
+    end
+
+    TriggerServerEvent("plouffe_fleeca:destroyLoots", NetworkGetNetworkIdFromEntity(trolleyEntity), Fle.Utils.currentFleeca.zone, Fle.Utils.MyAuthKey)
 end
 
 function Fle.TryLoot()

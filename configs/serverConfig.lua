@@ -1,17 +1,8 @@
-Auth = exports.plouffe_lib:Get("Auth")
-Callback = exports.plouffe_lib:Get("Callback")
-Utils = exports.plouffe_lib:Get("Utils")
-
-Server = {
-	ready = false,
-}
-
 Fle = {}
 
 Fle.Utils = {
   ped = 0,
-  pedCoords = vector3(0,0,0),
-  maxMoney = 5000
+  pedCoords = vector3(0,0,0)
 }
 
 Fle.Trolley = {
