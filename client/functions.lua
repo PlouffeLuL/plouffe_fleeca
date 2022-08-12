@@ -55,32 +55,34 @@ function Fle:Start()
         table.insert(data, joaat(v.trolley))
     end
 
-    if GetResourceState("qtarget") ~= "missing" then
-        local breakCount = 0
-        while GetResourceState("qtarget") ~= "started" and breakCount < 30 do
-            breakCount += 1
-            Wait(1000)
-        end
+    if GetConvar("plouffe_fleeca:qtarget", "") == "true" then
+        if GetResourceState("qtarget") ~= "missing" then
+            local breakCount = 0
+            while GetResourceState("qtarget") ~= "started" and breakCount < 30 do
+                breakCount += 1
+                Wait(1000)
+            end
 
-        if GetResourceState("qtarget") ~= "started" then
-            return
-        end
+            if GetResourceState("qtarget") ~= "started" then
+                return
+            end
 
-        exports.qtarget:AddTargetModel(data,{
-            distance = 1.5,
-            options = {
-                {
-                    icon = 'fas fa-info',
-                    label = Lang.bank_tryLoot,
-                    action = Fle.TryLoot
-                },
-                {
-                    icon = 'fas fa-viruses',
-                    label = Lang.bank_tryDestroy,
-                    action = Fle.DestroyLoot
+            exports.qtarget:AddTargetModel(data,{
+                distance = 1.5,
+                options = {
+                    {
+                        icon = 'fas fa-info',
+                        label = Lang.bank_tryLoot,
+                        action = Fle.TryLoot
+                    },
+                    {
+                        icon = 'fas fa-viruses',
+                        label = Lang.bank_tryDestroy,
+                        action = Fle.TryDestroyLoot
+                    }
                 }
-            }
-        })
+            })
+        end
     end
 end
 
@@ -94,11 +96,6 @@ function Fle:ExportAllZones()
 end
 
 function Fle:RegisterEvents()
-    AddEventHandler("plouffe_lib:inVehicle", function(inVehicle, vehicle)
-        self.Utils.inVehicle = inVehicle
-        self.Utils.vehicle = vehicle
-    end)
-
     AddEventHandler("plouffe_fleeca:inFleeca", function(params)
         self.Utils.currentFleeca = params
     end)
@@ -108,7 +105,10 @@ function Fle:RegisterEvents()
     end)
 
     AddEventHandler("trolley:TryLoot", Fle.TryLoot)
-    AddEventHandler("trolley:destroy", Fle.DestroyLoot)
+    AddEventHandler("trolley:destroy", Fle.TryDestroyLoot)
+
+    Utils:RegisterNetEvent("plouffe_fleeca:tryHack", Fle.TryThermal)
+    Utils:RegisterNetEvent("plouffe_fleeca:tryThermal", Fle.TryHack)
 end
 
 function Fle:HackAnimation()
@@ -239,6 +239,12 @@ function Fle.TryThermal()
         return
     end
 
+    for k,v in pairs(Fle.thermal_items) do
+        if Utils:GetItemCount(k) < v then
+            return
+        end
+    end
+
     local zone = Fle.Utils.currentFleeca.zone
 
     if not exports.plouffe_lib:IsInZone(("%s_%s"):format(zone, "vault_gate_1")) then
@@ -265,8 +271,10 @@ function Fle.TryHack()
         return
     end
 
-    if Utils:GetItemCount("card_fleeca") < 1 then
-        return
+    for k,v in pairs(Fle.hack_items) do
+        if Utils:GetItemCount(k) < v then
+            return
+        end
     end
 
     local zone = Fle.Utils.currentFleeca.zone
@@ -334,7 +342,7 @@ function Fle.TryHack()
 end
 exports("TryHack",Fle.TryHack)
 
-function Fle.DestroyLoot()
+function Fle.TryDestroyLoot()
     local ped = PlayerPedId()
     local pedCoords = GetEntityCoords(ped)
     local trolleyEntity, data, key = Fle:GetTrolley(pedCoords)
@@ -343,8 +351,9 @@ function Fle.DestroyLoot()
         return
     end
 
-    TriggerServerEvent("plouffe_fleeca:destroyLoots", NetworkGetNetworkIdFromEntity(trolleyEntity), Fle.Utils.currentFleeca.zone, Fle.Utils.MyAuthKey)
+    TriggerServerEvent("plouffe_fleeca:TryDestroyLoots", NetworkGetNetworkIdFromEntity(trolleyEntity), Fle.Utils.currentFleeca.zone, Fle.Utils.MyAuthKey)
 end
+exports("TryDestroyLoot",Fle.TryDestroyLoot)
 
 function Fle.TryLoot()
     if not Fle.Utils.currentFleeca then

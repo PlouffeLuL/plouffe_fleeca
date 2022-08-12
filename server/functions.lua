@@ -151,12 +151,13 @@ local DoesEntityExist = DoesEntityExist
 local SetEntityRotation = SetEntityRotation
 local Wait = Wait
 
-local robIntervall = 60 * 60 * 1
 local lastRob = 0
 
 local ready = false
 
 function Fle.Init()
+    Fle.ValidateConfig()
+
     Utils:CreateDepencie("plouffe_doorlock", Fle.ExportsAllDoors)
 
     for k,v in pairs(Fle.Banks) do
@@ -166,15 +167,109 @@ function Fle.Init()
 
     ready = true
 
-    local sleepTimer = 1000 * 60 * 15
-
     while true do
         for k,v in pairs(Fle.Banks) do
             v.currentMoney = Fle:AddBankMoney(k,v)
         end
 
-        Wait(sleepTimer)
+        Wait(Fle.addMoneyIntervall)
     end
+end
+
+function Fle.ValidateConfig()
+    Fle.MoneyItem = GetConvar("plouffe_fleeca:money_item", "")
+    Fle.MoneyMeta = GetConvar("plouffe_fleeca:use_money_metadata", "false")
+    Fle.MinCops = tonumber(GetConvar("plouffe_fleeca:min_cops", ""))
+    Fle.PoliceGroups = json.decode(GetConvar("plouffe_fleeca:police_groups", ""))
+    Fle.robIntervall = (tonumber(GetConvar("plouffe_fleeca:global_rob_interval", ""))) * (60 * 1000 * 60)
+    Fle.banksIntervall = (tonumber(GetConvar("plouffe_fleeca:banks_rob_interval", ""))) * (60 * 1000 * 60)
+    Fle.addMoneyIntervall = (tonumber(GetConvar("plouffe_fleeca:add_money_interval", ""))) * (1000 * 60)
+    Fle.minMoneyAddition = tonumber(GetConvar("plouffe_fleeca:min_money_addition", ""))
+    Fle.maxMoneyAddition = tonumber(GetConvar("plouffe_fleeca:max_money_addition", ""))
+
+    local data = json.decode(GetConvar("plouffe_fleeca:hack_item", ""))
+    if data and type(data) == "table" then
+        Fle.hack_items = {}
+
+        for k,v in pairs(data) do
+            local one, two = v:find(":")
+            Fle.hack_items[v:sub(0,one - 1)] = tonumber(v:sub(one + 1,v:len()))
+        end
+        data = nil
+    end
+
+    data = json.decode(GetConvar("plouffe_fleeca:thermal_item", ""))
+    if data and type(data) == "table" then
+        Fle.thermal_items = {}
+
+        for k,v in pairs(data) do
+            local one, two = v:find(":")
+            Fle.thermal_items[v:sub(0,one - 1)] = tonumber(v:sub(one + 1,v:len()))
+        end
+    end
+
+    if not Fle.hack_items or type(Fle.hack_items) ~= "table" then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'hack_items' convar. Refer to documentation")
+        end
+    elseif not Fle.thermal_items or type(Fle.thermal_items) ~= "table" then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'thermal_items' convar. Refer to documentation")
+        end
+    elseif not Fle.MoneyItem or type(Fle.MoneyItem) ~= "string" or Fle.MoneyItem:len() < 1 then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'money_item' convar. Refer to documentation")
+        end
+    elseif not Fle.PoliceGroups or type(Fle.PoliceGroups) ~= "table" then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'police_groups' convar. Refer to documentation")
+        end
+    elseif not Fle.MinCops then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'min_cops' convar. Refer to documentation")
+        end
+    elseif not Fle.PoliceGroups then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'police_groups' convar. Refer to documentation")
+        end
+    elseif not Fle.robIntervall then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'robIntervall' convar. Refer to documentation")
+        end
+    elseif not Fle.banksIntervall then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'banks_rob_interval' convar. Refer to documentation")
+        end
+    elseif not Fle.addMoneyIntervall then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'add_money_interval' convar. Refer to documentation")
+        end
+    elseif not Fle.minMoneyAddition then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'min_money_addition' convar. Refer to documentation")
+        end
+    elseif not Fle.maxMoneyAddition then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'max_money_addition' convar. Refer to documentation")
+        end
+    end
+
+    Fle.robIntervall = Fle.robIntervall * (60 * 1000 * 60)
+    Fle.banksIntervall = Fle.banksIntervall * (60 * 1000 * 60)
+    Fle.addMoneyIntervall = Fle.addMoneyIntervall * (1000 * 60)
+
+    return true
 end
 
 function Fle.ExportsAllDoors()
@@ -217,7 +312,7 @@ function Fle.LoadPlayer()
 end
 
 function Fle:AddBankMoney(index,data)
-    local addition = math.random(2000, 5000)
+    local addition = math.random(self.minMoneyAddition, self.maxMoneyAddition)
     local newMoney = data.currentMoney + addition < data.maxMoney and data.currentMoney + addition or data.maxMoney
     SetResourceKvpInt(("currentMoney_%s"):format(index), newMoney)
     return newMoney
@@ -230,7 +325,9 @@ function Fle.FinishedThermal(zone, succes, authkey)
         return
     end
 
-    Inventory.RemoveItem(playerId, "thermal_charge", 1)
+    for k,v in pairs(Fle.thermal_items) do
+        Inventory.RemoveItem(playerId, k, v)
+    end
 
     if succes then
         local index = ("%s_vault_gate"):format(zone)
@@ -248,7 +345,9 @@ function Fle.RequestLoots(netId, index, authkey)
     local data = Fle.Banks[index].trolleySpawns
     for k,v in pairs(data) do
         if v.netId and v.netId == netId then
-            if Inventory.CanCarryItem(playerId, "money_bag", 1, {weight = math.ceil(0.1 * v.value), description = ("Contiens pour %s $ de billets marquer"):format(v.value), value = v.value}) then
+            local canCarry = (Fle.MoneyMeta == "false" and Inventory.CanCarryItem(playerId, Fle.MoneyItem, v.value)) or (Fle.MoneyMeta == "true" and Inventory.CanCarryItem(playerId, Fle.MoneyItem, 1, {weight = math.ceil(0.1 * v.value), description = Lang.bank_moneyItemMeta:format(v.value), value = v.value}))
+
+            if canCarry then
                 local entity = NetworkGetEntityFromNetworkId(v.netId)
                 DeleteEntity(entity)
                 v.netId = nil
@@ -256,10 +355,15 @@ function Fle.RequestLoots(netId, index, authkey)
                 Fle.Banks[index].currentMoney = math.ceil(Fle.Banks[index].currentMoney - v.value)
                 SetResourceKvpInt(("currentMoney_%s"):format(index), Fle.Banks[index].currentMoney)
 
-                Inventory.AddItem(playerId, "money_bag", 1, {weight = math.ceil(0.1 * v.value), description = ("Contiens pour %s $ de billets marquer"):format(v.value), value = v.value})
+                if Fle.MoneyMeta == "true" then
+                    Inventory.AddItem(playerId, Fle.MoneyItem, 1, {weight = math.ceil(0.1 * v.value), description = Lang.bank_moneyItemMeta:format(v.value), value = v.value})
+                else
+                    Inventory.AddItem(playerId, Fle.MoneyItem, v.value)
+                end
+
                 break
             else
-                TriggerClientEvent("plouffe_lib:notify", playerId, {type = "inform", txt = ("Vous ne pouvez pas porter ce sac d'argent"), length = 5000})
+                TriggerClientEvent("plouffe_lib:notify", playerId, {type = "inform", txt = Lang.bank_cantCarryMoney, length = 5000})
                 break
             end
         end
@@ -334,19 +438,25 @@ function Fle.StartRobbery(index, waitTimer, authkey)
         return
     end
 
-    local reduced, reason = Inventory.ReduceDurability(playerId, "laptop", 60 * 60 * 48)
+    for k,v in pairs(Fle.hack_items) do
+        local reduced, reason = Inventory.ReduceDurability(playerId, k, 60 * 60 * 48)
 
-    if not reduced then
-        return
+        if not reduced then
+            return
+        end
     end
 
-    local count = Inventory.Search(playerId, "count", "card_fleeca")
+    for k,v in pairs(Fle.hack_items) do
+        local count = Inventory.Search(playerId, "count", k)
 
-    if count < 1 then
-        return
+        if count < v then
+            return
+        end
     end
 
-    Inventory.RemoveItem(playerId, "card_fleeca", 1)
+    for k,v in pairs(Fle.hack_items) do
+        Inventory.RemoveItem(playerId, v, v)
+    end
 
     lastRob = time
     Fle.Banks[index].lastRob = time
@@ -359,18 +469,20 @@ end
 function Fle:CanRob(index)
     local time = os.time()
 
-    if time - lastRob < robIntervall then
+    if time - lastRob < self.robIntervall then
         return false, Lang.bank_robbedLately
     end
 
-    if time - self.Banks[index].lastRob < 60 * 60 * 12 then
+    if time - self.Banks[index].lastRob < self.banksIntervall then
         return false, Lang.bank_thisBankIsRobbed
     end
 
-    local cops = Groups:GetGroupPlayers("police")
+    for k,v in pairs(Fle.PoliceGroups) do
+        local cops = Groups:GetGroupPlayers(v)
 
-    if cops.len < 4 then
-        return false, Lang.bank_notEnoughCop
+        if cops.len < Fle.MinCops then
+            return false, Lang.bank_notEnoughCop
+        end
     end
 
     return true
@@ -383,7 +495,9 @@ function Fle.HackingFailed(authkey)
         return
     end
 
-    Inventory.ReduceDurability(playerId, "laptop", 60 * 60 * 24)
+    for k,v in pairs(Fle.hack_items) do
+        local reduced, reason = Inventory.ReduceDurability(playerId, k, 60 * 60 * 24)
+    end
 end
 
 Callback:RegisterServerCallback("plouffe_fleeca:canRob", function(source, cb, index, authkey)
