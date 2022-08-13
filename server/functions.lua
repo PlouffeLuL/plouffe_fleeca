@@ -54,7 +54,7 @@ local gateDoors = {
 			{model = -1591004109, coords = vec3(314.623871, -285.994476, 54.463009)}
 		},
         access = {
-			jobs = {
+			groups = {
 				police = {rankSpecific = 7}
 			}
         }
@@ -70,7 +70,7 @@ local gateDoors = {
 			{model = -1591004109, coords = vec3(150.291321, -1047.629028, 29.666298)}
 		},
         access = {
-			jobs = {
+			groups = {
 				police = {rankSpecific = 7}
 			}
         }
@@ -86,7 +86,7 @@ local gateDoors = {
 			{model = -1591004109, coords = vec3(-350.414368, -56.797054, 49.334797)}
 		},
         access = {
-			jobs = {
+			groups = {
 				police = {rankSpecific = 7}
 			}
         }
@@ -102,7 +102,7 @@ local gateDoors = {
 			{model = -1591004109, coords = vec3(-1207.328247, -335.128937, 38.079254)}
 		},
         access = {
-			jobs = {
+			groups = {
 				police = {rankSpecific = 7}
 			}
         }
@@ -118,7 +118,7 @@ local gateDoors = {
 			{model = -1591004109, coords = vec3(-2956.116211, 485.420593, 15.995309)}
 		},
         access = {
-			jobs = {
+			groups = {
 				police = {rankSpecific = 7}
 			}
         }
@@ -134,7 +134,7 @@ local gateDoors = {
 			{model = -1591004109, coords = vec3(1172.291138, 2713.146240, 38.386253)}
 		},
         access = {
-			jobs = {
+			groups = {
 				police = {rankSpecific = 7}
 			}
         }
