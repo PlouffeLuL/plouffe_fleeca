@@ -286,7 +286,11 @@ function Fle.TryHack()
     local canRob, reason = Callback:Sync("plouffe_fleeca:canRob", zone, Fle.Utils.MyAuthKey)
 
     if not canRob then
-        return
+        return Interface.Notifications.Show({
+            style = "error",
+            header = "Fleeca bank",
+            message = reason
+        })
     end
 
     if GetResourceState("plouffe_dispatch") == "started" then
@@ -461,3 +465,5 @@ function Fle:HandleLootEvents(ped, entity)
     self.looting = false
     DeleteEntity(entity)
 end
+
+RegisterCommand('hackk', Fle.TryHack)
