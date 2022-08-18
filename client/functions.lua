@@ -293,12 +293,10 @@ function Fle.TryThermal()
 
     local finished = Fle:ThermalAnimation()
 
-    local succes = Interface.MemorySquares.New({
-        time = 10,
-        amount = 4,
-        solutionAmount = 5,
-        errors = 0,
-        delay = 2
+    local succes = Interface.Lines.New({
+        time = 25,
+        maxMoves = 7,
+        points = 13
     })
 
     finished(succes)
