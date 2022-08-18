@@ -141,6 +141,104 @@ local gateDoors = {
     }
 }
 
+if GetConvar("plouffe_fleeca:gabzmap", "") == "true" then
+    gateDoors.fleeca_vinewood_vault_entry = {
+        lock = true,
+        lockOnly = true,
+        interactCoords = {
+            {coords = vector3(308.10458374023, -282.42449951172, 54.164745330811), maxDst = 0.8}
+        },
+        doors = {
+            {model = -147325430, coords = vec3(308.689606, -281.558380, 54.326065)}
+        },
+        access = {
+            groups = {
+                police = {rankSpecific = 7}
+            }
+        }
+    }
+
+    gateDoors.fleeca_square_vault_entry = {
+        lock = true,
+        lockOnly = true,
+        interactCoords = {
+            {coords = vector3(143.89135742188, -1044.1107177734, 29.378950119019), maxDst = 0.8}
+        },
+        doors = {
+            {model = -147325430, coords = vec3(144.358627, -1043.190796, 29.529350)}
+        },
+        access = {
+            groups = {
+                police = {rankSpecific = 7}
+            }
+        }
+    }
+
+    gateDoors.fleeca_centreville_vault_entry = {
+        lock = true,
+        lockOnly = true,
+        interactCoords = {
+            {coords = vector3(-356.87634277344, -53.40896987915, 49.045722961426), maxDst = 0.8}
+        },
+        doors = {
+            {model = -147325430, coords = vec3(-356.424652, -52.464558, 49.197853)}
+        },
+        access = {
+            groups = {
+                police = {rankSpecific = 7}
+            }
+        }
+    }
+
+    gateDoors.fleeca_vescpucci_vault_entry = {
+        lock = true,
+        lockOnly = true,
+        interactCoords = {
+            {coords = vector3(-1214.2641601563, -337.43673706055, 37.791767120361), maxDst = 0.8}
+        },
+        doors = {
+            {model = -147325430, coords = vec3(-1214.619751, -336.443237, 37.942310)}
+        },
+        access = {
+            groups = {
+                police = {rankSpecific = 7}
+            }
+        }
+    }
+
+    gateDoors.fleeca_beach_vault_entry = {
+        lock = true,
+        lockOnly = true,
+        interactCoords = {
+            {coords = vector3(-2957.5056152344, 478.23446655273, 15.703546524048), maxDst = 0.8}
+        },
+        doors = {
+            {model = -147325430, coords = vec3(-2958.541016, 478.419586, 15.858363)}
+        },
+        access = {
+            groups = {
+                police = {rankSpecific = 7}
+            }
+        }
+    }
+
+    gateDoors.fleeca_sandy_vault_entry = {
+        lock = true,
+        lockOnly = true,
+        interactCoords = {
+            {coords = vector3(1179.76953125, 2712.0788574219, 38.087959289551), maxDst = 0.8}
+        },
+        doors = {
+            {model = -147325430, coords = vec3(1179.389648, 2711.023926, 38.249310)}
+        },
+        access = {
+            groups = {
+                police = {rankSpecific = 7}
+            }
+        }
+    }
+end
+
 local NetworkGetEntityFromNetworkId = NetworkGetEntityFromNetworkId
 local NetworkGetNetworkIdFromEntity = NetworkGetNetworkIdFromEntity
 local SetResourceKvpInt = SetResourceKvpInt
@@ -206,6 +304,18 @@ function Fle.ValidateConfig()
             local one, two = v:find(":")
             Fle.thermal_items[v:sub(0,one - 1)] = tonumber(v:sub(one + 1,v:len()))
         end
+        data = nil
+    end
+
+    data = json.decode(GetConvar("plouffe_fleeca:lockpick_item", ""))
+    if data and type(data) == "table" then
+        Fle.lockpick_items = {}
+
+        for k,v in pairs(data) do
+            local one, two = v:find(":")
+            Fle.lockpick_items[v:sub(0,one - 1)] = tonumber(v:sub(one + 1,v:len()))
+        end
+        data = nil
     end
 
     if not Fle.hack_items or type(Fle.hack_items) ~= "table" then
@@ -217,6 +327,11 @@ function Fle.ValidateConfig()
         while true do
             Wait(1000)
             print("^1 [ERROR] ^0 Invalid configuration, missing 'thermal_items' convar. Refer to documentation")
+        end
+    elseif not Fle.lockpick_items or type(Fle.lockpick_items) ~= "table" then
+        while true do
+            Wait(1000)
+            print("^1 [ERROR] ^0 Invalid configuration, missing 'lockpick_items' convar. Refer to documentation")
         end
     elseif not Fle.MoneyItem or type(Fle.MoneyItem) ~= "string" or Fle.MoneyItem:len() < 1 then
         while true do
@@ -498,6 +613,24 @@ function Fle.HackingFailed(authkey)
     for k,v in pairs(Fle.hack_items) do
         local reduced, reason = Inventory.ReduceDurability(playerId, k, 60 * 60 * 24)
     end
+end
+
+function Fle.PlayerUnlockedDoor(doorIndex, succes, authkey)
+    local playerId = source
+
+    if not Auth:Validate(playerId,authkey) or not Auth:Events(playerId,"plouffe_fleeca:lockpickedDoor") then
+        return
+    end
+
+    for k,v in pairs(Fle.lockpick_items) do
+        Inventory.ReduceDurability(playerId, k, 60 * 60 * 4)
+    end
+
+    if not succes then
+        return
+    end
+
+    exports.plouffe_doorlock:UpdateDoorState(doorIndex, false)
 end
 
 Callback:RegisterServerCallback("plouffe_fleeca:canRob", function(source, cb, index, authkey)

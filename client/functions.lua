@@ -109,6 +109,7 @@ function Fle:RegisterEvents()
 
     Utils:RegisterNetEvent("plouffe_fleeca:tryHack", Fle.TryThermal)
     Utils:RegisterNetEvent("plouffe_fleeca:tryThermal", Fle.TryHack)
+    Utils:RegisterNetEvent("plouffe_fleeca:tryLockpick", Fle.TryLockpick)
 end
 
 function Fle:HackAnimation()
@@ -234,6 +235,41 @@ function Fle:GetTrolley(coords)
     end
 end
 
+function Fle.TryLockpick()
+    if not Fle.Utils.currentFleeca then
+        return
+    end
+
+    local zone = Fle.Utils.currentFleeca.zone
+
+    if not exports.plouffe_lib:IsInZone(("%s_%s"):format(zone, "vault_entry_1")) then
+        return
+    end
+
+    for k,v in pairs(Fle.lockpick_items) do
+        if Utils:GetItemCount(k) < v then
+            return Interface.Notifications.Show({
+                style = "error",
+                header = "Paleto bank",
+                message = Lang.missing_something
+            })
+        end
+    end
+
+    Utils:PlayAnim(nil, "mp_arresting", "a_uncuff" , 49, 3.0, 2.0, 5000, true, true, true)
+
+    local succes = Interface.Lockpick.New({
+        amount = 7,
+        range = 40,
+        maxKeys = 4
+    })
+
+    Utils:StopAnim()
+
+    TriggerServerEvent("plouffe_fleeca:lockpickedDoor", ("%s_%s"):format(zone, "vault_entry"), succes, Fle.Utils.MyAuthKey)
+end
+exports("TryLockpick", Fle.TryLockpick)
+
 function Fle.TryThermal()
     if not Fle.Utils.currentFleeca then
         return
@@ -241,7 +277,11 @@ function Fle.TryThermal()
 
     for k,v in pairs(Fle.thermal_items) do
         if Utils:GetItemCount(k) < v then
-            return
+            return Interface.Notifications.Show({
+                style = "error",
+                header = "Paleto bank",
+                message = Lang.missing_something
+            })
         end
     end
 
@@ -273,7 +313,11 @@ function Fle.TryHack()
 
     for k,v in pairs(Fle.hack_items) do
         if Utils:GetItemCount(k) < v then
-            return
+            return Interface.Notifications.Show({
+                style = "error",
+                header = "Fleeca bank",
+                message = Lang.missing_something
+            })
         end
     end
 
@@ -465,5 +509,3 @@ function Fle:HandleLootEvents(ped, entity)
     self.looting = false
     DeleteEntity(entity)
 end
-
-RegisterCommand('hackk', Fle.TryHack)
