@@ -279,9 +279,9 @@ function Fle.ValidateConfig()
     Fle.MoneyMeta = GetConvar("plouffe_fleeca:use_money_metadata", "false")
     Fle.MinCops = tonumber(GetConvar("plouffe_fleeca:min_cops", ""))
     Fle.PoliceGroups = json.decode(GetConvar("plouffe_fleeca:police_groups", ""))
-    Fle.robIntervall = (tonumber(GetConvar("plouffe_fleeca:global_rob_interval", ""))) * (60 * 1000 * 60)
-    Fle.banksIntervall = (tonumber(GetConvar("plouffe_fleeca:banks_rob_interval", ""))) * (60 * 1000 * 60)
-    Fle.addMoneyIntervall = (tonumber(GetConvar("plouffe_fleeca:add_money_interval", ""))) * (1000 * 60)
+    Fle.robIntervall = (tonumber(GetConvar("plouffe_fleeca:global_rob_interval", "")))
+    Fle.banksIntervall = (tonumber(GetConvar("plouffe_fleeca:banks_rob_interval", "")))
+    Fle.addMoneyIntervall = (tonumber(GetConvar("plouffe_fleeca:add_money_interval", "")))
     Fle.minMoneyAddition = tonumber(GetConvar("plouffe_fleeca:min_money_addition", ""))
     Fle.maxMoneyAddition = tonumber(GetConvar("plouffe_fleeca:max_money_addition", ""))
 
@@ -380,9 +380,9 @@ function Fle.ValidateConfig()
         end
     end
 
-    Fle.robIntervall = Fle.robIntervall * (60 * 1000 * 60)
-    Fle.banksIntervall = Fle.banksIntervall * (60 * 1000 * 60)
-    Fle.addMoneyIntervall = Fle.addMoneyIntervall * (1000 * 60)
+    Fle.robIntervall *= (60 * (1000 * 60))
+    Fle.banksIntervall *= (60 * (1000 * 60))
+    Fle.addMoneyIntervall *= (1000 * 60)
 
     return true
 end
