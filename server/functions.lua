@@ -592,9 +592,14 @@ function Fle:CanRob(index)
         return false, Lang.bank_thisBankIsRobbed
     end
 
+    local count = 0
+
     for k,v in pairs(Fle.PoliceGroups) do
         local cops = Groups:GetGroupPlayers(v)
+        count += cops.len
+    end
 
+    if count < Fle.MinCops then
         if cops.len < Fle.MinCops then
             return false, Lang.bank_notEnoughCop
         end
