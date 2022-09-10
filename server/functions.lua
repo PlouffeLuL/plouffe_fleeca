@@ -600,9 +600,7 @@ function Fle:CanRob(index)
     end
 
     if count < Fle.MinCops then
-        if cops.len < Fle.MinCops then
-            return false, Lang.bank_notEnoughCop
-        end
+        return false, Lang.bank_notEnoughCop
     end
 
     return true
