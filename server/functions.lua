@@ -570,7 +570,7 @@ function Fle.StartRobbery(index, waitTimer, authkey)
     end
 
     for k,v in pairs(Fle.hack_items) do
-        Inventory.RemoveItem(playerId, v, v)
+        Inventory.RemoveItem(playerId, k, v)
     end
 
     lastRob = time
