@@ -107,14 +107,14 @@ function Fle:RegisterEvents()
     AddEventHandler("trolley:TryLoot", Fle.TryLoot)
     AddEventHandler("trolley:destroy", Fle.TryDestroyLoot)
 
-    Utils:RegisterNetEvent("plouffe_fleeca:tryHack", Fle.TryThermal)
-    Utils:RegisterNetEvent("plouffe_fleeca:tryThermal", Fle.TryHack)
-    Utils:RegisterNetEvent("plouffe_fleeca:tryLockpick", Fle.TryLockpick)
+    Utils.RegisterNetEvent("plouffe_fleeca:tryHack", Fle.TryThermal)
+    Utils.RegisterNetEvent("plouffe_fleeca:tryThermal", Fle.TryHack)
+    Utils.RegisterNetEvent("plouffe_fleeca:tryLockpick", Fle.TryLockpick)
 end
 
 function Fle:HackAnimation()
     local dict = "anim@heists@ornate_bank@hack"
-    local animLoaded = Utils:AssureAnim(dict, true)
+    local animLoaded = Utils.AssureAnim(dict, true)
 
     local ped = PlayerPedId()
     local pedRotation = GetEntityRotation(ped)
@@ -127,9 +127,9 @@ function Fle:HackAnimation()
 
     -- FreezeEntityPosition(ped, true)
 
-    local bagEntity =  Utils:CreateProp("hei_p_m_bag_var22_arm_s",  {x = offset.x, y = offset.y, z = offset.z - 5.0}, nil, true, true)
-    local laptopEntity =  Utils:CreateProp("hei_prop_hst_laptop",  {x = offset.x, y = offset.y, z = offset.z - 8.0}, nil, true, true)
-    local cardEntity =  Utils:CreateProp("hei_prop_heist_card_hack_02",  {x = offset.x, y = offset.y, z = offset.z - 12.0}, nil, true, true)
+    local bagEntity =  Utils.CreateProp("hei_p_m_bag_var22_arm_s",  {x = offset.x, y = offset.y, z = offset.z - 5.0}, nil, true, true)
+    local laptopEntity =  Utils.CreateProp("hei_prop_hst_laptop",  {x = offset.x, y = offset.y, z = offset.z - 8.0}, nil, true, true)
+    local cardEntity =  Utils.CreateProp("hei_prop_heist_card_hack_02",  {x = offset.x, y = offset.y, z = offset.z - 12.0}, nil, true, true)
 
     SetEntityCollision(bagEntity, false, true)
     SetEntityCollision(laptopEntity, false, true)
@@ -177,11 +177,11 @@ function Fle:ThermalAnimation()
     local boneIndex = GetPedBoneIndex(ped, 28422)
     local dict = "anim@heists@ornate_bank@thermal_charge"
 
-    local fxLoaded = Utils:AssureFxAsset("scr_ornate_heist", true)
-    local animLoaded = Utils:AssureAnim(dict, true)
+    local fxLoaded = Utils.AssureFxAsset("scr_ornate_heist", true)
+    local animLoaded = Utils.AssureAnim(dict, true)
 
-    local bagEntity = Utils:CreateProp("hei_p_m_bag_var22_arm_s",{x = offset.x, y = offset.y, z = offset.z - 10.0}, nil, true, true)
-    local bombEntity = Utils:CreateProp("hei_prop_heist_thermite",{x = offset.x, y = offset.y, z = offset.z - 12.0}, nil, true, true)
+    local bagEntity = Utils.CreateProp("hei_p_m_bag_var22_arm_s",{x = offset.x, y = offset.y, z = offset.z - 10.0}, nil, true, true)
+    local bombEntity = Utils.CreateProp("hei_prop_heist_thermite",{x = offset.x, y = offset.y, z = offset.z - 12.0}, nil, true, true)
 
     SetEntityCollision(bagEntity, false, true)
     SetEntityCollision(bombEntity, false, true)
@@ -247,7 +247,7 @@ function Fle.TryLockpick()
     end
 
     for k,v in pairs(Fle.lockpick_items) do
-        if Utils:GetItemCount(k) < v then
+        if Utils.GetItemCount(k) < v then
             return Interface.Notifications.Show({
                 style = "error",
                 header = "Paleto bank",
@@ -256,7 +256,7 @@ function Fle.TryLockpick()
         end
     end
 
-    Utils:PlayAnim(nil, "mp_arresting", "a_uncuff" , 49, 3.0, 2.0, 5000, true, true, true)
+    Utils.PlayAnim(nil, "mp_arresting", "a_uncuff" , 49, 3.0, 2.0, 5000, true, true, true)
 
     local succes = Interface.Lockpick.New({
         amount = 7,
@@ -264,7 +264,7 @@ function Fle.TryLockpick()
         maxKeys = 4
     })
 
-    Utils:StopAnim()
+    Utils.StopAnim()
 
     TriggerServerEvent("plouffe_fleeca:lockpickedDoor", ("%s_%s"):format(zone, "vault_entry"), succes, Fle.Utils.MyAuthKey)
 end
@@ -276,7 +276,7 @@ function Fle.TryThermal()
     end
 
     for k,v in pairs(Fle.thermal_items) do
-        if Utils:GetItemCount(k) < v then
+        if Utils.GetItemCount(k) < v then
             return Interface.Notifications.Show({
                 style = "error",
                 header = "Paleto bank",
@@ -310,7 +310,7 @@ function Fle.TryHack()
     end
 
     for k,v in pairs(Fle.hack_items) do
-        if Utils:GetItemCount(k) < v then
+        if Utils.GetItemCount(k) < v then
             return Interface.Notifications.Show({
                 style = "error",
                 header = "Fleeca bank",
@@ -325,7 +325,7 @@ function Fle.TryHack()
         return
     end
 
-    local canRob, reason = Callback:Sync("plouffe_fleeca:canRob", zone, Fle.Utils.MyAuthKey)
+    local canRob, reason = Callback.Sync("plouffe_fleeca:canRob", zone, Fle.Utils.MyAuthKey)
 
     if not canRob then
         return Interface.Notifications.Show({
@@ -418,23 +418,23 @@ function Fle.TryLoot()
     local trolleyCoords = GetEntityCoords(trolleyEntity)
     local boneIndex = GetPedBoneIndex(ped, 60309)
 
-    local emptyTrolley = Utils:CreateProp(data.empty,{x = trolleyCoords.x, y = trolleyCoords.y, z = trolleyCoords.z - 12.0}, nil, true, true)
+    local emptyTrolley = Utils.CreateProp(data.empty,{x = trolleyCoords.x, y = trolleyCoords.y, z = trolleyCoords.z - 12.0}, nil, true, true)
 
     SetEntityRotation(emptyTrolley, trolleyRotation.x, trolleyRotation.y, trolleyRotation.z)
     FreezeEntityPosition(emptyTrolley, true)
 
-    local lootEntity = Utils:CreateProp(data.prop,{x = trolleyCoords.x, y = trolleyCoords.y, z = trolleyCoords.z - 10.0}, nil, true, true)
+    local lootEntity = Utils.CreateProp(data.prop,{x = trolleyCoords.x, y = trolleyCoords.y, z = trolleyCoords.z - 10.0}, nil, true, true)
 
     FreezeEntityPosition(lootEntity, true)
     SetEntityNoCollisionEntity(lootEntity, ped)
     SetEntityVisible(lootEntity, false, false)
     AttachEntityToEntity(lootEntity, ped, boneIndex, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 0, true)
 
-    local emptyModelLoaded = Utils:AssureModel(data.empty, true)
-    local hasEntityControl = Utils:AssureEntityControl(trolleyEntity)
-    local animLoaded = Utils:AssureAnim("anim@heists@ornate_bank@grab_cash", true)
+    local emptyModelLoaded = Utils.AssureModel(data.empty, true)
+    local hasEntityControl = Utils.AssureEntityControl(trolleyEntity)
+    local animLoaded = Utils.AssureAnim("anim@heists@ornate_bank@grab_cash", true)
 
-    local bagEntity = Utils:CreateProp("hei_p_m_bag_var22_arm_s",{x = pedCoords.x, y = pedCoords.y, z = pedCoords.z - 10.0}, nil, true, true)
+    local bagEntity = Utils.CreateProp("hei_p_m_bag_var22_arm_s",{x = pedCoords.x, y = pedCoords.y, z = pedCoords.z - 10.0}, nil, true, true)
 
     local scene = NetworkCreateSynchronisedScene(trolleyCoords.x, trolleyCoords.y, trolleyCoords.z, trolleyRotation.x, trolleyRotation.y, trolleyRotation.z, 2, false, false, 1065353216, 0, 1.3)
     NetworkAddPedToSynchronisedScene(ped, scene, "anim@heists@ornate_bank@grab_cash", "intro", 1.5, -4.0, 1, 16, 1148846080, 0)

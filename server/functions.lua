@@ -256,7 +256,7 @@ local ready = false
 function Fle.Init()
     Fle.ValidateConfig()
 
-    Utils:CreateDepencie("plouffe_doorlock", Fle.ExportsAllDoors)
+    Utils.CreateDepencie("plouffe_doorlock", Fle.ExportsAllDoors)
 
     for k,v in pairs(Fle.Banks) do
         v.lastRob = GetResourceKvpInt(("lastrob_%s"):format(k)) or 0
@@ -411,7 +411,7 @@ end
 
 function Fle.LoadPlayer()
     local playerId = source
-    local registred, key = Auth:Register(playerId)
+    local registred, key = Auth.Register(playerId)
 
     while not ready do
         Wait(100)
@@ -436,7 +436,7 @@ end
 function Fle.FinishedThermal(zone, succes, authkey)
     local playerId = source
 
-    if not Auth:Validate(playerId,authkey) or not Auth:Events(playerId,"plouffe_fleeca:finished_thermal") then
+    if not Auth.Validate(playerId,authkey) or not Auth.Events(playerId,"plouffe_fleeca:finished_thermal") then
         return
     end
 
@@ -453,7 +453,7 @@ end
 function Fle.RequestLoots(netId, index, authkey)
     local playerId = source
 
-    if not Auth:Validate(playerId,authkey) or not Auth:Events(playerId,"plouffe_fleeca:requestLoots") then
+    if not Auth.Validate(playerId,authkey) or not Auth.Events(playerId,"plouffe_fleeca:requestLoots") then
         return
     end
 
@@ -488,7 +488,7 @@ end
 function Fle.DestroyLoots(netId, index, authkey)
     local playerId = source
 
-    if not Auth:Validate(playerId,authkey) or not Auth:Events(playerId,"plouffe_fleeca:destroyLoots") then
+    if not Auth.Validate(playerId,authkey) or not Auth.Events(playerId,"plouffe_fleeca:destroyLoots") then
         return
     end
 
@@ -507,7 +507,7 @@ function Fle:CreateTrolley(index)
     local bank = self.Banks[index]
     local data = bank.trolleySpawns
     local model = joaat(self.Trolley.cash.trolley)
-    local value = math.ceil(bank.currentMoney / Utils:TableLen(data))
+    local value = math.ceil(bank.currentMoney / Utils.TableLen(data))
 
     for k,v in pairs(data) do
         local randi = math.random(0,1)
@@ -542,7 +542,7 @@ end
 function Fle.StartRobbery(index, waitTimer, authkey)
     local playerId = source
 
-    if not Auth:Validate(playerId,authkey) or not Auth:Events(playerId,"plouffe_fleeca:hacking_finished") then
+    if not Auth.Validate(playerId,authkey) or not Auth.Events(playerId,"plouffe_fleeca:hacking_finished") then
         return
     end
 
@@ -595,7 +595,7 @@ function Fle:CanRob(index)
     local count = 0
 
     for k,v in pairs(Fle.PoliceGroups) do
-        local cops = Groups:GetGroupPlayers(v)
+        local cops = Groups.GetGroupPlayers(v)
         count += cops.len
     end
 
@@ -609,7 +609,7 @@ end
 function Fle.HackingFailed(authkey)
     local playerId = source
 
-    if not Auth:Validate(playerId,authkey) or not Auth:Events(playerId,"plouffe_fleeca:hacking_finished") then
+    if not Auth.Validate(playerId,authkey) or not Auth.Events(playerId,"plouffe_fleeca:hacking_finished") then
         return
     end
 
@@ -621,7 +621,7 @@ end
 function Fle.PlayerUnlockedDoor(doorIndex, succes, authkey)
     local playerId = source
 
-    if not Auth:Validate(playerId,authkey) or not Auth:Events(playerId,"plouffe_fleeca:lockpickedDoor") then
+    if not Auth.Validate(playerId,authkey) or not Auth.Events(playerId,"plouffe_fleeca:lockpickedDoor") then
         return
     end
 
@@ -636,12 +636,12 @@ function Fle.PlayerUnlockedDoor(doorIndex, succes, authkey)
     exports.plouffe_doorlock:UpdateDoorState(doorIndex, false)
 end
 
-Callback:RegisterServerCallback("plouffe_fleeca:canRob", function(source, cb, index, authkey)
+Callback.Register("plouffe_fleeca:canRob", function(source, index, authkey)
     local _source = source
-    if Auth:Validate(_source,authkey) and Auth:Events(_source,"plouffe_fleeca:canRob") then
-        cb(Fle:CanRob(index))
+    if Auth.Validate(_source,authkey) and Auth.Events(_source,"plouffe_fleeca:canRob") then
+       return Fle:CanRob(index)
     else
-        cb(false)
+       return false
     end
 end)
 
